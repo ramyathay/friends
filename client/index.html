@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html ng-app = 'friendsApp'>
+<head>
+	<title>Full Mean Demo = "support tag from-rainbow"</title>
+	<script type="text/javascript" src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+	<script>
+		var friendsApp = angular.module("friendsApp" , []);
+
+
+		friendsApp.controller('FriendsController',function($scope , FriendFactory){
+			$scope.addFriend = function(){
+				FriendFactory.addFriend($scope.new_friend, function() {
+					$scope.getFriends();
+					$scope.new_friend = "";
+				});
+			}
+			$scope.getFriends = function (){
+				FriendFactory.getFriends(function(data){
+					$scope.friends = data;
+				});
+			}
+			$scope.deleteFriend = function(friend){
+				console.log(friend);
+				FriendFactory.deleteFriend(friend,function(){
+					$scope.getFriends();
+				});
+			}
+			$scope.getFriends();
+		});
+
+		friendsApp.factory('FriendFactory', function($http) {
+		  var factory = {};
+		  var friends = [];
+		  factory.getFriends = function(callback) {
+		    $http.get('/friends').success(function(output){
+		    	friends = output;
+		    	callback(friends);
+		    });
+		  }
+		  // note the use of callbacks!
+		  factory.addFriend = function(info,callback) {
+		    $http.post('/addFriend',info).success(function (){
+		    	console.log("Successfully added new record in the DB");
+		    	callback();
+		    });
+		  }
+		  factory.deleteFriend = function(friend,callback){
+		  	$http.get('/deleteFriend/'+ friend._id).success(function(){
+		  		console.log("Successfully deleted the friend");
+		  		callback();
+		  	});
+		  }
+		  return factory;
+		});
+	</script>
+</head>
+<body ng-controller = 'FriendsController'>
+	<h1>Friends</h1>
+	<input type="text" ng-model = "filter_name" placeholder = "filter">
+	<ul>
+		<li ng-repeat = "friend in friends | filter: filter_name"> 
+			<p>{{friend.name}} ,{{friend.age}} </p>
+			<button ng-click = 'deleteFriend(friend)'>Delete Friend</button>
+		</li>
+	</ul>
+	<h1>Add a friend</h1>
+	<input type="text" ng-model = "new_friend.name" placeholder = "name">
+	<input type="text" ng-model = "new_friend.age" placeholder = 'age'>
+	<input type="submit" ng-click = "addFriend()">
+</body>
+</html>
